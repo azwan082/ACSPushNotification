@@ -16,8 +16,17 @@ class ACSPushNotification {
 	protected $path = '';
 	protected $ch;
 
-	public function __construct() {
+	/**
+	 * @param array $options
+	 */
+	public function __construct($options) {
 		$this->path = dirname(__FILE__);
+		$this->appKey = $options['appKey'];
+		$this->consumerKey = $options['consumerKey'];
+		$this->secret = $options['secret'];
+		$this->adminName = $options['adminName'];
+		$this->adminPass = $options['adminPass'];
+		$this->channel = $options['channel'];
 		$this->initRequest();
 		$this->loginAdmin();
 	}
