@@ -67,7 +67,7 @@ class ACSPushNotification {
 	}
 	
 	/**
-     * POST https://api.cloud.appcelerator.com/v1/users/login.json
+	 * POST https://api.cloud.appcelerator.com/v1/users/login.json
 	 * - login
 	 * - password
 	 */
