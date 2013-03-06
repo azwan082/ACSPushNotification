@@ -53,9 +53,10 @@ class ACSPushNotification {
 				'payload' => json_encode(array(
 					'badge' => 1,
 					'sound' => 'default',
-					'alert' => $title,
-					'title' => $message,
-					'vibrate' => false
+					'alert' => $message,
+					'title' => $title,
+					'icon' => 'appicon',
+					'vibrate' => true
 				))
 			));
 			if (!$result) {
