@@ -10,6 +10,7 @@ class ACSPushNotification {
 	protected $adminName = '';
 	protected $adminPass = '';
 	protected $channel = '';
+	protected $vibrate = false;
 	protected $log = array();
 	protected $path = '';
 	protected $tmp = '';
@@ -28,6 +29,9 @@ class ACSPushNotification {
 		$this->adminName = $options['adminName'];
 		$this->adminPass = $options['adminPass'];
 		$this->channel = $options['channel'];
+		if (isset($options['vibrate'])) {
+			$this->vibrate = $options['vibrate'];
+		}
 		$this->initRequest();
 	}
 
@@ -56,7 +60,7 @@ class ACSPushNotification {
 					'alert' => $message,
 					'title' => $title,
 					'icon' => 'appicon',
-					'vibrate' => true
+					'vibrate' => $this->vibrate
 				))
 			));
 			if (!$result) {
