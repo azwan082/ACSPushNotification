@@ -9,7 +9,6 @@ class ACSPushNotification {
 	protected $appKey = '';
 	protected $adminName = '';
 	protected $adminPass = '';
-	protected $channel = '';
 	protected $vibrate = false;
 	protected $log = array();
 	protected $path = '';
@@ -28,7 +27,6 @@ class ACSPushNotification {
 		$this->appKey = $options['appKey'];
 		$this->adminName = $options['adminName'];
 		$this->adminPass = $options['adminPass'];
-		$this->channel = $options['channel'];
 		if (isset($options['vibrate'])) {
 			$this->vibrate = $options['vibrate'];
 		}
@@ -45,15 +43,16 @@ class ACSPushNotification {
 	/**
 	 * @param string $title
 	 * @param string $message
+	 * @param string $channel
 	 * @param int $retry
 	 */
-	public function send($title, $message, $retry=0) {
+	public function send($title, $message, $channel, $retry=0) {
 		if ($retry < $this->maxRetry) {
 			if ($retry > 0) {
 				sleep($this->retryDelay * $retry);
 			}
 			$result = $this->sendRequest('https://api.cloud.appcelerator.com/v1/push_notification/notify.json', array(
-				'channel' => $this->channel,
+				'channel' => $channel,
 				'payload' => json_encode(array(
 					'badge' => 1,
 					'sound' => 'default',
