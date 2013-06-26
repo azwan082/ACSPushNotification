@@ -3,6 +3,8 @@
  * Appcelerator Cloud Service PHP Push Notification
  * 
  * Send push notification from a PHP application to ACS
+ * 
+ * Require: cURL, write access to temp folder
  */
 class ACSPushNotification {
 
@@ -12,7 +14,7 @@ class ACSPushNotification {
 	protected $vibrate = false;
 	protected $log = array();
 	protected $path = '';
-	protected $tmp = '';
+	protected $cookieJar = '';
 	protected $ch;
 	protected $errorCode = 0;
 	protected $maxRetry = 5;
@@ -23,7 +25,7 @@ class ACSPushNotification {
 	 */
 	public function __construct($options) {
 		$this->path = dirname(__FILE__);
-		$this->tmp = sys_get_temp_dir();
+		$this->cookieJar = sys_get_temp_dir() . '/cookie.txt';
 		$this->appKey = $options['appKey'];
 		$this->adminName = $options['adminName'];
 		$this->adminPass = $options['adminPass'];
@@ -63,10 +65,18 @@ class ACSPushNotification {
 				))
 			));
 			if (!$result) {
+				$r = false;
 				if ($this->errorCode == 401) { // not logged in
-					$this->loginAdmin();
+					$r = $this->loginAdmin();
 				}
-				$this->send($title, $message, ++$retry);
+				if ($this->errorCode == 404) {
+					$z = @unlink($this->cookieJar);
+					$this->log[] = 'delete cookieJar = '. $z;
+					$r = $this->loginAdmin();
+				}
+				if ($r) {
+					$this->send($title, $message, $channel, ++$retry);
+				}
 			}
 		}
 		$this->log[] = 'send(), retry = '. $retry .', result = ';
@@ -87,14 +97,30 @@ class ACSPushNotification {
 	 * POST https://api.cloud.appcelerator.com/v1/users/login.json
 	 * - login
 	 * - password
+	 * @param int $retry
 	 */
-	protected function loginAdmin() {
-		$result = $this->sendRequest('https://api.cloud.appcelerator.com/v1/users/login.json', array(
-			'login' => $this->adminName,
-			'password' => $this->adminPass
-		));
-		$this->log[] = 'loginAdmin(), result = ';
-		$this->log[] = $result;
+	protected function loginAdmin($retry=0) {
+		if ($retry < $this->maxRetry) {
+			if ($retry > 0) {
+				sleep($this->retryDelay * $retry);
+			}
+			$result = $this->sendRequest('https://api.cloud.appcelerator.com/v1/users/login.json', array(
+				'login' => $this->adminName,
+				'password' => $this->adminPass
+			));
+			$this->log[] = 'loginAdmin(), retry = '. $retry .', result = ';
+			$this->log[] = $result;
+			if ($result) {
+				return true;
+			} else {
+				if ($this->errorCode == 404) {
+					$r = @unlink($this->cookieJar);
+					$this->log[] = 'delete cookieJar = '. $r;
+				}
+				return $this->loginAdmin(++$retry);
+			}
+		}
+		return false;
 	}
 	
 	/**
@@ -112,8 +138,8 @@ class ACSPushNotification {
 				// set post parameter
 				CURLOPT_POST => true,
 				// store cookie
-				CURLOPT_COOKIEFILE => $this->tmp . '/cookie.txt',
-				CURLOPT_COOKIEJAR => $this->tmp . '/cookie.txt',
+				CURLOPT_COOKIEFILE => $this->cookieJar,
+				CURLOPT_COOKIEJAR => $this->cookieJar,
 				// return result as string
 				CURLOPT_RETURNTRANSFER => true
 			);
